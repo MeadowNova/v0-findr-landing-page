@@ -18,6 +18,7 @@ yarn-error.log*
 
 # env files
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -25,3 +26,22 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# development environment
+/.cursor/
+/.roo/
+/.roomodes
+/.taskmasterconfig
+/.windsurfrules
+
+# task management
+/taskmaster_commands.txt
+/tasks/
+
+# test and admin
+/app/api/v1/supabase-test/
+/app/api/v1/admin/
+
+# scripts and docs (temporary)
+/scripts/
+/docs/architecture/
