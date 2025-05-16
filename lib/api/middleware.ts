@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ApiContext, ApiException, ErrorCode } from './types';
 import { errorResponse, unauthorizedResponse } from './response';
+import { authService } from '@/lib/supabase/auth';
 
 /**
  * Type for middleware handler functions
@@ -31,7 +32,7 @@ export function withMiddleware(
     const context: ApiContext = {
       isAuthenticated: false,
     };
-    
+
     try {
       // Apply authentication middleware if required
       if (options.requireAuth) {
@@ -49,7 +50,7 @@ export function withMiddleware(
           context.isAuthenticated = true;
         }
       }
-      
+
       // Apply rate limiting middleware if configured
       if (options.rateLimit) {
         const rateLimitResult = await checkRateLimit(req, options.rateLimit);
@@ -61,10 +62,10 @@ export function withMiddleware(
           );
         }
       }
-      
+
       // Execute the handler
       const response = await handler(req, context);
-      
+
       // Return the response or a default success response
       return response || NextResponse.json({ success: true });
     } catch (error) {
@@ -87,7 +88,7 @@ async function authenticateRequest(req: NextRequest, required: boolean = true): 
 }> {
   // Get the authorization header
   const authHeader = req.headers.get('authorization');
-  
+
   // If no auth header and auth is required, return unauthorized
   if (!authHeader && required) {
     return {
@@ -95,14 +96,14 @@ async function authenticateRequest(req: NextRequest, required: boolean = true): 
       message: 'Authentication required',
     };
   }
-  
+
   // If no auth header and auth is not required, return not authenticated
   if (!authHeader && !required) {
     return {
       isAuthenticated: false,
     };
   }
-  
+
   // Check if the auth header is a bearer token
   if (!authHeader?.startsWith('Bearer ')) {
     return {
@@ -110,34 +111,27 @@ async function authenticateRequest(req: NextRequest, required: boolean = true): 
       message: 'Invalid authentication format',
     };
   }
-  
+
   // Extract the token
   const token = authHeader.substring(7);
-  
+
   try {
-    // TODO: Implement JWT verification with a proper library
-    // For now, we'll use a placeholder implementation
-    
-    // This is a placeholder for JWT verification
-    // In a real implementation, you would verify the token and extract the user data
-    if (token === 'invalid-token') {
+    // Verify the token using Supabase Auth
+    const { user, error } = await authService.verifyToken(token);
+
+    if (error || !user) {
       return {
         isAuthenticated: false,
-        message: 'Invalid token',
+        message: error?.message || 'Invalid token',
       };
     }
-    
-    // Mock user data for demonstration
-    const user = {
-      id: '123',
-      email: 'user@example.com',
-    };
-    
+
     return {
       isAuthenticated: true,
       user,
     };
   } catch (error) {
+    console.error('Token verification error:', error);
     return {
       isAuthenticated: false,
       message: 'Invalid token',
@@ -157,7 +151,7 @@ async function checkRateLimit(
 ): Promise<{ allowed: boolean; retryAfter?: number }> {
   // TODO: Implement rate limiting with Redis or similar
   // For now, we'll use a placeholder implementation that always allows requests
-  
+
   // This is a placeholder for rate limiting
   // In a real implementation, you would check the rate limit against a store like Redis
   return {

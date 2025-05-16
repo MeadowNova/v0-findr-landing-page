@@ -1,61 +1,82 @@
-"use client"
+'use client';
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Radar, Search, Zap, MessageSquare, CheckCircle, ArrowRight, Lock, Sparkles } from "lucide-react"
-import Image from "next/image"
-import { useState } from "react"
+import { useRouter } from 'next/navigation';
+import {
+  Box,
+  Button,
+  Container,
+  Flex,
+  Heading,
+  Image,
+  Stack,
+  Text,
+  useColorModeValue,
+} from '@chakra-ui/react';
 
 export default function Home() {
-  const [isHovered, setIsHovered] = useState(false)
-  const [isCtaHovered, setIsCtaHovered] = useState(false)
+  const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-slate-900 text-gray-100">
-      {/* Navbar */}
-      <header className="container mx-auto py-6 px-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Radar className="h-8 w-8 text-blue-500" />
-          <span className="text-2xl font-bold">Findr</span>
-        </div>
-        <nav className="hidden md:flex items-center gap-6">
-          <a href="#how-it-works" className="hover:text-blue-400 transition">
-            How It Works
-          </a>
-          <a href="#testimonials" className="hover:text-blue-400 transition">
-            Testimonials
-          </a>
-          <a href="#pricing" className="hover:text-blue-400 transition">
-            Pricing
-          </a>
-        </nav>
-        <Button className="bg-blue-500 hover:bg-blue-600">Get Started</Button>
-      </header>
-
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 md:py-32 flex flex-col md:flex-row items-center">
-        <div className="md:w-1/2 mb-10 md:mb-0">
-          <div className="inline-flex items-center px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-600/20 to-blue-400/20 border border-blue-500/30 text-blue-400 text-base md:text-lg font-medium mb-6 shadow-lg animate-pulse hover:scale-105 transition-transform">
-            <div className="bg-blue-500/20 rounded-full p-1.5 mr-3">
-              <Sparkles className="h-5 w-5 text-blue-400" />
-            </div>
-            <span className="relative">
-              <span className="font-bold">NEW:</span> AI-Powered Deal Concierge for Marketplace Shoppers
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-              </span>
-            </span>
-          </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-            We Hunt Facebook Marketplace <span className="text-blue-500">So You Don't Have To.</span>
-          </h1>
-          <p className="text-xl text-gray-300 mb-8">
-            Tell us what you want. We'll track it down fast—and deliver exact matches straight to your phone. Free to
-            try. Pay only when we deliver.
-          </p>
+    <Box bg={useColorModeValue('gray.50', 'gray.900')}>
+      <Container maxW={'7xl'}>
+        <Stack
+          align={'center'}
+          spacing={{ base: 8, md: 10 }}
+          py={{ base: 20, md: 28 }}
+          direction={{ base: 'column', md: 'row' }}>
+          <Stack flex={1} spacing={{ base: 5, md: 10 }}>
+            <Heading
+              lineHeight={1.1}
+              fontWeight={600}
+              fontSize={{ base: '3xl', sm: '4xl', lg: '6xl' }}>
+              <Text
+                as={'span'}
+                position={'relative'}
+                _after={{
+                  content: "''",
+                  width: 'full',
+                  height: '30%',
+                  position: 'absolute',
+                  bottom: 1,
+                  left: 0,
+                  bg: 'purple.400',
+                  zIndex: -1,
+                }}>
+                Your Personal
+              </Text>
+              <br />
+              <Text as={'span'} color={'purple.400'}>
+                Deal Hunter
+              </Text>
+            </Heading>
+            <Text color={'gray.500'}>
+              We hunt Facebook Marketplace so you don't have to. Tell us what you want, and we'll find it for you.
+              Pay only when you find what you're looking for!
+            </Text>
+            <Stack
+              spacing={{ base: 4, sm: 6 }}
+              direction={{ base: 'column', sm: 'row' }}>
+              <Button
+                rounded={'full'}
+                size={'lg'}
+                fontWeight={'normal'}
+                px={6}
+                colorScheme={'purple'}
+                bg={'purple.400'}
+                _hover={{ bg: 'purple.500' }}
+                onClick={() => router.push('/matches')}>
+                Browse Matches
+              </Button>
+              <Button
+                rounded={'full'}
+                size={'lg'}
+                fontWeight={'normal'}
+                px={6}
+                onClick={() => router.push('/unlocks')}>
+                My Unlocks
+              </Button>
+            </Stack>
+          </Stack>
 
           <div
             className="relative group"

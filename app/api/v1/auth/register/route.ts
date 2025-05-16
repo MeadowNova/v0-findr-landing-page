@@ -1,12 +1,13 @@
 import { NextRequest } from 'next/server';
-import { 
-  ApiException, 
-  ErrorCode, 
-  successResponse, 
-  withBodyValidation, 
+import {
+  ApiException,
+  ErrorCode,
+  successResponse,
+  withBodyValidation,
   withMiddleware,
   z
 } from '@/lib/api';
+import { authService } from '@/lib/supabase/auth';
 
 // Register request schema
 const registerSchema = z.object({
@@ -28,37 +29,49 @@ type RegisterRequest = z.infer<typeof registerSchema>;
 
 /**
  * POST /api/v1/auth/register
- * 
+ *
  * Register a new user
  */
 export const POST = withMiddleware(async (req: NextRequest) => {
   // Validate request body
   const validationResult = await withBodyValidation(registerSchema)(req);
   if (validationResult) return validationResult;
-  
+
   // Get validated data
   const { email, password } = (req as any).validatedBody as RegisterRequest;
-  
-  // TODO: Implement actual registration logic
-  // This is a placeholder implementation
-  
-  // Mock registration logic
-  if (email === 'existing@example.com') {
-    // Mock email already in use
+
+  // Register with Supabase
+  const { data, error } = await authService.register({ email, password });
+
+  if (error) {
+    // Check if the error is due to email already in use
+    if (error.message?.includes('email already in use') || error.message?.includes('already registered')) {
+      throw new ApiException(
+        ErrorCode.VALIDATION_ERROR,
+        'Email already in use',
+        { email: ['Email already in use'] }
+      );
+    }
+
+    // Handle other registration errors
     throw new ApiException(
-      ErrorCode.VALIDATION_ERROR,
-      'Email already in use',
-      { email: ['Email already in use'] }
+      ErrorCode.INTERNAL_ERROR,
+      'Failed to register user',
+      { message: error.message }
     );
   }
-  
-  // Mock successful registration
+
+  // Return user data and session
   return successResponse({
     user: {
-      id: '123',
-      email,
-      createdAt: new Date().toISOString(),
+      id: data.user?.id,
+      email: data.user?.email,
+      createdAt: data.user?.created_at,
     },
-    token: 'mock-jwt-token',
+    session: {
+      accessToken: data.session?.access_token,
+      refreshToken: data.session?.refresh_token,
+      expiresAt: data.session?.expires_at,
+    }
   }, null, 201);
 });
