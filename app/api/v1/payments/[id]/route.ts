@@ -1,31 +1,30 @@
 import { NextRequest } from 'next/server';
-import { 
-  ApiContext, 
-  ApiException, 
-  ErrorCode, 
-  successResponse, 
+import {
+  ApiContext,
+  ApiException,
+  ErrorCode,
+  successResponse,
   withMiddleware,
 } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 
 /**
  * GET /api/v1/payments/[id]
- * 
+ *
  * Get payment details
  */
 export const GET = withMiddleware(
-  async (req: NextRequest, context: ApiContext) => {
-    // Get payment ID from URL
-    const url = new URL(req.url);
-    const paymentId = url.pathname.split('/').pop();
-    
+  async (req: NextRequest, context: ApiContext, { params }: { params: { id: string } }) => {
+    // Get payment ID from dynamic route params
+    const paymentId = params.id;
+
     if (!paymentId) {
       throw new ApiException(
         ErrorCode.VALIDATION_ERROR,
         'Payment ID is required',
       );
     }
-    
+
     // Get payment details
     const { data: payment, error } = await supabase
       .from('payments')
@@ -52,14 +51,14 @@ export const GET = withMiddleware(
       .eq('id', paymentId)
       .eq('user_id', context.user!.id)
       .single();
-    
+
     if (error || !payment) {
       throw new ApiException(
         ErrorCode.RESOURCE_NOT_FOUND,
         'Payment not found',
       );
     }
-    
+
     // Format payment for response
     const formattedPayment = {
       id: payment.id,
@@ -81,7 +80,7 @@ export const GET = withMiddleware(
         suggestedMessage: payment.unlocks[0].suggested_message,
       } : null,
     };
-    
+
     // Return payment details
     return successResponse({
       payment: formattedPayment,

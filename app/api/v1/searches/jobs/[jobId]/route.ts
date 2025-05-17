@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
-import { 
-  ApiContext, 
-  ApiException, 
-  ErrorCode, 
-  successResponse, 
+import {
+  ApiContext,
+  ApiException,
+  ErrorCode,
+  successResponse,
   withMiddleware,
 } from '@/lib/api';
 import { searchService } from '@/lib/services/search';
@@ -11,22 +11,21 @@ import { supabase } from '@/lib/supabase/client';
 
 /**
  * GET /api/v1/searches/jobs/[jobId]
- * 
+ *
  * Get search job status
  */
 export const GET = withMiddleware(
-  async (req: NextRequest, context: ApiContext) => {
-    // Get job ID from URL
-    const url = new URL(req.url);
-    const jobId = url.pathname.split('/').pop();
-    
+  async (req: NextRequest, context: ApiContext, { params }: { params: { jobId: string } }) => {
+    // Get job ID from dynamic route params
+    const { jobId } = params;
+
     if (!jobId) {
       throw new ApiException(
         ErrorCode.VALIDATION_ERROR,
         'Job ID is required',
       );
     }
-    
+
     // Verify that the job belongs to the user
     const { data: job, error: jobError } = await supabase
       .from('search_jobs')
@@ -34,24 +33,24 @@ export const GET = withMiddleware(
       .eq('id', jobId)
       .eq('searches.user_id', context.user!.id)
       .single();
-    
+
     if (jobError || !job) {
       throw new ApiException(
         ErrorCode.RESOURCE_NOT_FOUND,
         'Job not found',
       );
     }
-    
+
     // Get result count
     const { count, error: countError } = await supabase
       .from('matches')
       .select('id', { count: 'exact', head: true })
       .eq('job_id', jobId);
-    
+
     if (countError) {
       console.error('Error getting result count:', countError);
     }
-    
+
     // Return job status
     return successResponse({
       job: {

@@ -1,31 +1,30 @@
 import { NextRequest } from 'next/server';
-import { 
-  ApiContext, 
-  ApiException, 
-  ErrorCode, 
-  successResponse, 
+import {
+  ApiContext,
+  ApiException,
+  ErrorCode,
+  successResponse,
   withMiddleware,
 } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 
 /**
  * GET /api/v1/unlocks/[id]
- * 
+ *
  * Get unlock details
  */
 export const GET = withMiddleware(
-  async (req: NextRequest, context: ApiContext) => {
-    // Get unlock ID from URL
-    const url = new URL(req.url);
-    const unlockId = url.pathname.split('/').pop();
-    
+  async (req: NextRequest, context: ApiContext, { params }: { params: { id: string } }) => {
+    // Get unlock ID from dynamic route params
+    const unlockId = params.id;
+
     if (!unlockId) {
       throw new ApiException(
         ErrorCode.VALIDATION_ERROR,
         'Unlock ID is required',
       );
     }
-    
+
     // Get unlock details
     const { data: unlock, error } = await supabase
       .from('unlocks')
@@ -59,14 +58,14 @@ export const GET = withMiddleware(
       .eq('id', unlockId)
       .eq('user_id', context.user!.id)
       .single();
-    
+
     if (error || !unlock) {
       throw new ApiException(
         ErrorCode.RESOURCE_NOT_FOUND,
         'Unlock not found',
       );
     }
-    
+
     // Format unlock for response
     const formattedUnlock = {
       id: unlock.id,
@@ -94,7 +93,7 @@ export const GET = withMiddleware(
         createdAt: unlock.payments.created_at,
       } : null,
     };
-    
+
     // Return unlock details
     return successResponse({
       unlock: formattedUnlock,

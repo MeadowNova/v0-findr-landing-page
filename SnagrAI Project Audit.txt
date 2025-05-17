@@ -1,0 +1,122 @@
+SnagrAI Project Audit
+
+8. Action Plan for Production Release
+To elevate Snagr AI from its current state to a fully deployed, reliable production application, here is a high-impact action plan. The plan is divided into immediate fixes (to address critical gaps quickly), near-term enhancements (for stability and basic scalability), and strategic improvements (for robustness and future growth). Prioritization within each section is roughly in descending order:
+Immediate Next Steps (Critical Fixes in the next 1-2 sprints):
+Wire Up Frontend to Backend: Implement the missing client-side logic for search, auth, and data fetching:
+Hook the search form (“Start My Search” button) to call POST /api/v1/searches with the form criteria. On success, navigate the user to a results page or display a loading state. Perhaps create a dedicated page to show the search progress and poll for results (or redirect to the /matches page after initiating the search).
+Implement a Login & Registration UI. This could be a dedicated page or modal. Use the auth/register and auth/login API endpoints to create accounts and obtain the JWT. Upon login, store the token (e.g., in localStorage or a cookie) and set up the apiClient to include it on future requests. Also handle logout by clearing this storage and possibly informing the server (though server logout is not strictly needed if JWT is thrown away).
+Modify the “View My Matches” button on the landing page to either redirect to /matches if user is logged in (and ensure /matches will show their results), or prompt login if not authenticated. This ensures returning users can access their stuff.
+Connect the matches page to real data. Likely, after a search is created, the user should see actual results. We have two choices:
+a) Populate /matches with the results of the latest search (the backend can return results directly on the createSearch response, but currently it doesn’t wait for them – it immediately responds with searchId and jobId). Instead of complicating that, simply have the matches page call the results endpoint. We could store the searchId of the last search (in context or route) and use GET /api/v1/searches/{searchId}/results. Alternatively, design the matches page to fetch all recent matches (it could call GET /api/v1/searches to get search history and display the most recent’s matches). A simpler approach: when the search is initiated, route to something like /matches?search={id} and have that page load results for that id (polling until jobStatus is completed).
+Regardless of approach, remove the dummy mockMatches array
+github.com
+ and use real API data. Include proper loading states and error handling in the UI (the Chakra Skeleton usage is good for loading, and they have an Alert for errors – those can wrap around actual fetch logic rather than the dummy try/catch now).
+Connect the unlocks page to real data. Provide an endpoint (if not already) to get unlocked matches. There is likely GET /api/v1/payments/unlocks or similar missing. We do have paymentService.getUnlockedMatches(userId)
+github.com
+github.com
+, but no API route for it was shown. Implement app/api/v1/payments/unlocks/route.ts (or /users/unlocks) that returns paymentService.getUnlockedMatches. Then have /unlocks page fetch from that endpoint to list the user’s unlocked listings. Remove the mock and show actual unlocked items (with their seller info and suggested message as provided by the API). Include a message if none unlocked yet.
+Implement UI for password reset if intended: e.g., a “Forgot password?” link on login form that calls the forgot-password API, plus a page to capture new password after clicking the email link. This could be a dedicated reset page that reads a token from URL and calls the reset-password API. If time is short, this can be lower priority (since admin can reset manually or instruct user to re-register), but it’s part of a polished product to have it.
+Fix the [searchId]/results Route Bug: Correct the searchId extraction logic in GET /api/v1/searches/[searchId]/results. The simplest fix is to use Next.js dynamic route params. In a Next 13 route handler, you can define the function as export async function GET(req, { params }) and retrieve params.searchId. Refactor the route to use that, or parse the URL properly (e.g., new URL(req.url).pathname.match(/searches\/([^/]+)\/results/)). This will ensure that when the front-end requests .../searches/abc-123/results, it actually queries for search id "abc-123" and returns the data. Without this fix, users will never see any results, so it’s a must-do
+github.com
+.
+Enable TypeScript Checks and Fix Errors: Remove or invert the ignoreBuildErrors: true in next.config.mjs
+github.com
+. Run npm run build locally and address all TypeScript errors that arise. Likely issues could include missing types for Chakra UI (since it’s not in package.json, adding Chakra will solve a lot), possibly mismatched types in API responses, etc. Similarly, run npm run lint and fix critical lint issues (unused variables, etc.). This step is important to catch bugs – for example, TypeScript would likely flag that searchId parsing code as wrong type, or that certain variables are undefined. By fixing these, you preempt runtime errors. This also improves code quality for future contributors.
+Add Missing Dependencies: Ensure all libraries used in code are declared in package.json. Notably add:
+@chakra-ui/react (and its peer deps like @emotion/react if needed) because it’s used in components
+github.com
+.
+@supabase/supabase-js for Supabase client (surprisingly not listed, but clearly used). Without it, a fresh install might fail.
+Double-check versions for compatibility (Chakra UI latest vs React 19, etc.). After adding, test the app. This avoids “module not found” errors in deployment.
+Configure Environment Variables: Move the Supabase URL and anon key to env variables. For example, in Next, any env var prefixed with NEXT_PUBLIC_ will be exposed to the browser. So use NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY. Then initialize Supabase like:
+ts
+Copy
+Edit
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+This way, switching the app to a different Supabase instance (e.g., production vs staging) is just an env change, not a code change. Update your deployment config on Vercel with these values. Also set the other needed envs as mentioned (Stripe keys, Bright Data key, App URL, etc.). Provide a .env.example file in the repo listing all keys (without actual values) to document them for any new developer or environment.
+Test Core Flows End-to-End (Manually): Before deploying, run the app locally and simulate:
+Register a new user -> login -> perform a search -> see that results load (might need to wait a moment or refresh if polling isn’t instant) -> attempt to unlock a listing -> go through Stripe test checkout -> ensure you get redirected back and the unlock appears in the unlocks page with seller info.
+Also test login with wrong credentials (see error), and test the logout sequence.
+If possible, test password reset (this might be tricky without a proper UI; can skip if not fully implemented).
+Note any bugs encountered and fix them. This manual QA is essential given no automated tests. It’s better to catch issues now than have users hit them.
+Deploy to a Staging Environment: Use a staging Vercel project or a separate deployment to test in a production-like setting with all env vars. Monitor logs for any runtime errors (for example, Supabase RLS errors or Bright Data failures). Especially test the Stripe webhook: on staging, you can use Stripe’s CLI to forward webhook events to your dev URL or use test mode. Ensure the webhook route is working (it should return a 200 and create unlock records). Adjust any webhook configuration as needed (the endpoint secret must match, etc.). This staging run will verify that the background job via setTimeout does indeed execute on Vercel (it likely will, but if it doesn’t, you might need to introduce a delay or alternative approach immediately).
+These immediate steps will turn the application from “mostly backend ready” to “end-to-end functional.” Once these are done, the app should be usable by an end user for its primary use case.
+Near-Term Enhancements (Stability, Security, and Cleanup in next 4-6 weeks):
+Improve Background Job Handling: Replace or augment the setTimeout job processing with a more reliable mechanism. Options:
+Use Supabase Edge Functions or Database Triggers: For example, create a trigger on the search_jobs table for new inserts that calls a Supabase Edge Function (written in TS or JS) to process the job. This moves the workload off the Next.js API lambda. Supabase Edge Functions can securely call Bright Data and update the DB, and you can schedule them or trigger via webhook. This decouples job processing from the user request entirely.
+Use Vercel Cron: Vercel now supports scheduled functions. You could set up a cron job (say every minute) that calls an API route /api/v1/searches/process-pending (using searchProcessorService.processPendingJobs() which already processes multiple pending jobs in batch
+github.com
+github.com
+). This way, even if a job isn’t processed immediately, it will be picked up within a minute. You can reduce reliance on setTimeout, or keep setTimeout for quick response and have cron as backup to catch any stragglers.
+Or incorporate a simple queue in memory if deploying a persistent server (not really feasible on Vercel serverless).
+Any approach is better than the uncertain setTimeout. As an intermediate quick fix, you might increase the delay (setTimeout with 0ms is effectively immediate – you could just await searchProcessorService.processJob() directly, but that blocks the response). Alternatively, consider responding only after initial DB insert, and let the client poll – which is already the design. That’s fine if jobs complete fast. But for longer jobs, it might be good to inform the user that it’s queued. In the short term, a cron approach is simplest with minimal changes: just ensure at least one path will complete the job.
+Implement Token Refresh or Prolong Session: Decide on how to manage session expiry. Two approaches:
+Implement /auth/refresh: Use Supabase’s refresh token. Supabase JS has supabase.auth.refreshSession(refreshToken) or you can call the auth API directly. Create a route that requires a valid refresh token (likely sent in Authorization header or body) and returns a new access token (and possibly a new refresh). This route should verify the refresh token with Supabase (Supabase can do this server-side with the Admin key, but careful: the anon key might not allow using refresh tokens on server side; you might need the service role key). If too complex, skip this for now.
+Increase JWT expiry: Supabase allows configuring JWT expiry (maybe up to a week or more). For an MVP, you might set it to, say, 7 days. This reduces frequency of logins. It’s less secure if a token is stolen, but easier on implementation. If you do this, document it, and ensure users can log out (which invalidates token on client but not on server – Supabase doesn’t have a token revocation list for JWTs unless you use their logout which invalidates the refresh token).
+In either case, this is to improve UX. Not urgent for launch, but important soon after if you don’t want angry users re-login daily. If going with refresh, you’ll also need to adjust front-end to automatically call refresh before token expiry (e.g., intercept 401 responses, or use a timer).
+Thorough Security Review & Hardening:
+Enable and test RLS policies in Supabase. For each table like searches, matches, etc., ensure there’s a policy like user_id = auth.uid() for SELECT/UPDATE/DELETE, and perhaps a separate policy for inserts (e.g., allow inserts if user_id = auth.uid() or using stored procedure).
+Remove any console.log of sensitive data. Production logs shouldn’t have personal info or raw errors that might leak implementation details. Instead, use a logging library and log error codes or sanitized messages. This can be combined with adding Sentry or another monitoring tool.
+Double-check that the Stripe webhook endpoint is secured (only Stripe can hit it). On Vercel, it’s a public URL, but with the secret check, it’s fine. One extra: respond with the proper status codes. The code currently returns a JSON success even for webhook (which is okay)
+github.com
+. If verification fails, it returns errorResponse (which is 400 likely)
+github.com
+. That’s good (Stripe needs non-2xx to mark failure).
+Consider rate limiting as originally planned. Implement the checkRateLimit in middleware using an in-memory store or a distributed store. On Vercel, in-memory won’t persist across instances, so either use an external store (Redis – perhaps Supabase offers a hosted Redis or use Upstash Redis which integrates with Vercel easily). Alternatively, for now implement a simple in-memory counter that resets every minute for each lambda instance – not perfect but better than nothing. Or use a library like rate-limiter-flexible. Focus on critical endpoints: login (to prevent brute force), register (to prevent spam), and create-search (to prevent abuse of Bright Data).
+If not already, enforce HTTPS everywhere (Vercel does by default) and secure cookies if using them for auth.
+Improve Error Messages & UX: Now that functionality is in place, refine some responses:
+Provide user-friendly messages from the API (e.g., on register, the code catches “email already in use” and returns a specific message
+github.com
+ – good. Do similar for other scenarios if needed).
+On the UI, use those messages to guide the user (display form errors, etc.). Ensure error handling is not just console.logging as in current placeholder.
+Check edge cases: what if Bright Data returns zero results? The front-end should handle an empty results list gracefully (“No matches found, try broadening your search.”).
+What if Bright Data fails (network or 500 error)? The searchService.createSearch currently just catches DB errors, but if Bright Data fails, processJob catches and marks the job "failed"
+github.com
+. The results endpoint will return jobStatus: 'failed' and jobError message
+github.com
+github.com
+. We should surface that to the user (e.g., “Search failed: Bright Data service unavailable. Please try again.”). Make sure the front-end checks jobStatus and if "failed", shows jobError from response.
+Similarly for Stripe payment failures (though those are less likely, but handle gracefully if a payment doesn’t complete or user cancels).
+Add Basic Automated Tests: Start adding some tests for critical paths:
+Unit test for searchProcessorService.storeSearchResults to ensure relevance scoring and batch insertion logic works (you can mock supabase client in tests).
+Perhaps an integration-like test for searchService.createSearch assuming a test Supabase or using the RPC.
+At least one test for stripeService.createCheckoutSession with a stubbed supabase and stripe (to ensure conflict conditions).
+These can run in CI to prevent future regressions. Given time, this may be optional, but even a little test coverage can catch things like the searchId bug earlier.
+Dockerize (if needed): If you plan to run this outside of Vercel (say on AWS ECS or Heroku container), create a Dockerfile:
+Use Node LTS base image, install deps, build Next, then run next start.
+Ensure to pass necessary envs in container.
+This is not urgent if sticking to Vercel, but having a Dockerfile adds flexibility.
+Also consider a docker-compose for local dev that could run a local Supabase or link to external services.
+Documentation & Repo Cleanup: Update the README to reflect how to run the app, how to set env vars, etc. Remove or update outdated info (the v0.dev references might be fine, but add notes for developers). Also update the API docs in docs/api if endpoints changed (like if we add /payments/unlocks or fix return shapes). Maintaining accurate docs helps onboarding new team members or open-sourcing the project if intended.
+Strategic Recommendations (Long-term improvements):
+Scalability – Caching and Optimization: As usage grows, consider adding caching layers:
+Use Redis (as mentioned in docs
+github.com
+) to cache frequent search results or user preferences to reduce DB load. For example, if users often search similar queries, you could cache Bright Data responses for short periods. Or cache the final matches so the results page doesn’t always hit Postgres for pagination (though Postgres can handle it with proper indexes).
+Bright Data cost control: maybe restrict search radius or results count to what’s needed, to avoid huge payloads. Possibly implement categories or preset queries to limit scraping.
+Use CDN or caching for static assets (Next/Vercel does some automatically for static files).
+If some pages become heavy, consider SSR vs CSR tradeoffs. Currently, the matches and unlocks pages are client-side only ('use client' and fetch in useEffect). This is fine, but you could also pre-fetch some data on server side if SEO or faster first paint is desired. Not crucial now since it’s behind auth likely.
+User Experience & Feature Expansion: Once core is stable:
+Add notifications: since users provide email/phone and saved search frequency, implement a worker (maybe a daily cron) to email or SMS the user new matches for their saved searches. This might use an email service (SendGrid) or SMS API (Twilio). Supabase could also handle emails if configured. This feature completes the concierge promise.
+Build a nicer UI around the search results (filters for price, sort options, etc., which the API already supports via query params like sortBy
+github.com
+).
+Possibly allow direct messaging to sellers via the platform? That’s complex (and might violate FB terms), so maybe not.
+Incorporate real user feedback, etc.
+Monitoring & Analytics: Integrate an error monitoring tool (Sentry) to catch exceptions in production and a simple analytics to see how users use the app (e.g., track number of searches, conversion to unlocks, etc., either via a tool or custom logs). This will help iteratively improve the product and quickly react to any runtime errors that were not caught in testing.
+Upgrade Dependencies Periodically: Keep an eye on Next.js, Supabase client, and Stripe SDK for updates. For example, Next 15 (if that’s what 15.2.4 is) might have breaking changes from 13; ensure all libs remain compatible. Also watch Radix UI and Chakra if both are needed (currently Chakra is used for pages, Radix components might be used elsewhere in app or were scaffolded by v0.dev in UI code not looked at in depth – if Radix is not actually used, consider removing to reduce bundle size).
+Security Audit & Penetration Testing: Before a major production marketing push, it would be wise to do a security audit. This could include:
+Using Supabase’s audit features to ensure no overly broad service role usage (we aren’t using service key anywhere publicly, so likely fine).
+Pen-testing the web app for common vulns (Auth bypass, XSS by seeing if any user input goes unescaped – likely not, since little user-generated content except their search query which might appear in a results page? If you display the search query back to user, ensure to escape it to avoid any chance of HTML injection – though React does by default).
+Confirming compliance with privacy (if storing user data, have a privacy policy, etc., especially since scraping FB content can be a gray area).
+Prepare for Production Launch: Finally, ensure all the above culminates in a smooth launch:
+Set up a production Supabase project (if not already using one) with appropriate database volume.
+Migrate all necessary data or at least the schema from development to production (Supabase has migration tools or you can use their SQL dump).
+Ensure Bright Data account is production-ready (sufficient credits, etc.).
+Stripe account in live mode and tested with real card (small transactions).
+Incident response plan: if something goes wrong (Bright Data outage, etc.), have a way to disable features or a friendly error message to users.
+Scaling plan: if you get many users, know the limits (Supabase free tier is limited, Bright Data costs might surge, etc. – have monitoring on usage).
+Customer support: as a concierge service, users might have questions or issues, so have a contact or support channel ready (even if just a support email).
+By following this action plan, we can move from a rudimentary MVP to a robust, production-grade application. Many steps above can be done in parallel by a small team – for instance, one developer focuses on front-end integration while another sets up infra like cron jobs and tests. The key is to focus on the user journey – make sure a user can accomplish the goal of finding a desired item and connecting with the seller in a seamless, secure way. Each fix and improvement above serves that end goal. Once these actions are executed, Snagr AI should be ready for a public beta or full launch, with confidence in its functionality and reliability. Good luck!

@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
-import { 
-  ApiContext, 
-  ApiException, 
-  ErrorCode, 
-  successResponse, 
+import {
+  ApiContext,
+  ApiException,
+  ErrorCode,
+  successResponse,
   withMiddleware,
   withQueryValidation,
   z
@@ -20,29 +20,28 @@ const getResultsQuerySchema = z.object({
 
 /**
  * GET /api/v1/searches/[searchId]/results
- * 
+ *
  * Get search results
  */
 export const GET = withMiddleware(
-  async (req: NextRequest, context: ApiContext) => {
-    // Get search ID from URL
-    const url = new URL(req.url);
-    const searchId = url.pathname.split('/').pop()?.replace('/results', '');
-    
+  async (req: NextRequest, context: ApiContext, { params }: { params: { searchId: string } }) => {
+    // Get search ID from dynamic route params
+    const { searchId } = params;
+
     if (!searchId) {
       throw new ApiException(
         ErrorCode.VALIDATION_ERROR,
         'Search ID is required',
       );
     }
-    
+
     // Validate query parameters
     const validationResult = withQueryValidation(getResultsQuerySchema)(req);
     if (validationResult) return validationResult;
-    
+
     // Get validated data
     const { limit, offset, sortBy } = (req as any).validatedQuery;
-    
+
     // Verify that the search belongs to the user
     const { data: search, error: searchError } = await supabase
       .from('searches')
@@ -50,14 +49,14 @@ export const GET = withMiddleware(
       .eq('id', searchId)
       .eq('user_id', context.user!.id)
       .single();
-    
+
     if (searchError || !search) {
       throw new ApiException(
         ErrorCode.RESOURCE_NOT_FOUND,
         'Search not found',
       );
     }
-    
+
     // Get search job status
     const { data: job, error: jobError } = await supabase
       .from('search_jobs')
@@ -66,7 +65,7 @@ export const GET = withMiddleware(
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
-    
+
     if (jobError) {
       console.error('Error getting search job status:', jobError);
       throw new ApiException(
@@ -74,13 +73,13 @@ export const GET = withMiddleware(
         'Failed to get search job status',
       );
     }
-    
+
     // Get search results
     const { results, total } = await searchService.getSearchResults(
       searchId,
       { limit, offset, sortBy }
     );
-    
+
     // Return search results
     return successResponse({
       results,
