@@ -6,6 +6,13 @@ const BRIGHTDATA_API_KEY = process.env.BRIGHTDATA_API_KEY || '9ef6d96c-2ecd-4614
 const BRIGHTDATA_API_URL = 'https://api.brightdata.com/mcp';
 const BRIGHTDATA_MCP_PRESET = 'fb-marketplace-scraper';
 
+// Bright Data proxy configuration
+const BRIGHTDATA_PROXY_HOST = process.env.BRIGHTDATA_PROXY_HOST || 'brd.superproxy.io';
+const BRIGHTDATA_PROXY_PORT = parseInt(process.env.BRIGHTDATA_PROXY_PORT || '33325', 10);
+const BRIGHTDATA_PROXY_USERNAME = process.env.BRIGHTDATA_PROXY_USERNAME || 'brd-customer-hl_fo7ed603-zone-mcp_unlocker';
+const BRIGHTDATA_PROXY_PASSWORD = process.env.BRIGHTDATA_PROXY_PASSWORD || 'c9sfk6u49o4w';
+const BRIGHTDATA_ZONE_NAME = process.env.BRIGHTDATA_ZONE_NAME || 'mcp_unlocker';
+
 /**
  * Bright Data MCP result interface
  */
@@ -425,5 +432,35 @@ export const brightDataService = {
         error: error instanceof Error ? error.message : String(error),
       };
     }
+  },
+
+  /**
+   * Get proxy connection details for direct API access
+   * @returns Proxy connection details
+   */
+  getProxyDetails(): {
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+    zoneName: string;
+    proxyUrl: string;
+    curlCommand: string;
+  } {
+    // Create proxy URL in format: http://{username}:{password}@{host}:{port}
+    const proxyUrl = `http://${BRIGHTDATA_PROXY_USERNAME}:${BRIGHTDATA_PROXY_PASSWORD}@${BRIGHTDATA_PROXY_HOST}:${BRIGHTDATA_PROXY_PORT}`;
+
+    // Create curl command example for testing
+    const curlCommand = `curl "https://api.brightdata.com/request" -H "Content-Type: application/json" -H "Authorization: Bearer ${BRIGHTDATA_API_KEY}" -d '{"zone":"${BRIGHTDATA_ZONE_NAME}","url":"https://www.facebook.com/marketplace/","format":{"json":true}}'`;
+
+    return {
+      host: BRIGHTDATA_PROXY_HOST,
+      port: BRIGHTDATA_PROXY_PORT,
+      username: BRIGHTDATA_PROXY_USERNAME,
+      password: BRIGHTDATA_PROXY_PASSWORD,
+      zoneName: BRIGHTDATA_ZONE_NAME,
+      proxyUrl,
+      curlCommand,
+    };
   }
 };
