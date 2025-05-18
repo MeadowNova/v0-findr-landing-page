@@ -2,73 +2,51 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import {
-  Box,
-  Container,
-  Heading,
-  Text,
-  Image,
-  Flex,
-  Badge,
-  Divider,
-  Skeleton,
-  SkeletonText,
-  Alert,
-  AlertIcon,
-  Card,
-  CardBody,
-  Stack,
-  Button,
-  useToast,
-  Icon,
-  Textarea,
-  useClipboard,
-} from '@chakra-ui/react';
-import { UnlockIcon, CopyIcon, CheckIcon, ExternalLinkIcon } from '@chakra-ui/icons';
-import { apiClient } from '@/lib/api/client';
+import { UnlockWithDetails } from '@/lib/types';
 
 export default function UnlockDetailPage() {
   const params = useParams();
   const router = useRouter();
   const unlockId = params.id as string;
-  const toast = useToast();
   
-  const [unlock, setUnlock] = useState<any>(null);
+  const [unlock, setUnlock] = useState<UnlockWithDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const { hasCopied, onCopy } = useClipboard(unlock?.suggestedMessage || '');
+  const [hasCopied, setHasCopied] = useState(false);
   
   useEffect(() => {
     const fetchUnlock = async () => {
       try {
         // In a real implementation, you would fetch the unlock details from your API
         // For this example, we'll create a mock unlock
-        const mockUnlock = {
+        const mockUnlock: UnlockWithDetails = {
           id: unlockId,
-          unlockedAt: new Date().toISOString(),
           match: {
             id: '1',
             title: 'Vintage Camera Collection',
             price: 499.99,
-            description: 'A collection of vintage cameras in excellent condition. Includes models from the 1950s to 1980s.',
             imageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+            description: 'A collection of vintage cameras in excellent condition. Includes models from the 1950s to 1980s.',
             location: 'San Francisco, CA',
             listingUrl: 'https://example.com/listing/123',
             sellerInfo: {
               name: 'John Doe',
-              email: 'john@example.com',
-              phone: '+1 (555) 123-4567',
+              rating: '4.5',
+              joinedDate: '2020-01-01'
             },
+            search: {
+              id: 'search_123',
+              queryText: 'vintage cameras'
+            }
           },
-          suggestedMessage: "Hi! I'm interested in your Vintage Camera Collection listing for $499.99. Is it still available?",
           payment: {
             id: 'pay_123',
             amount: 4.99,
             currency: 'usd',
             status: 'completed',
-            createdAt: new Date().toISOString(),
+            createdAt: new Date().toISOString()
           },
+          createdAt: new Date().toISOString()
         };
         
         setUnlock(mockUnlock);
@@ -84,12 +62,12 @@ export default function UnlockDetailPage() {
   }, [unlockId]);
   
   const handleCopyMessage = () => {
-    onCopy();
-    toast({
-      title: 'Message copied',
-      status: 'success',
-      duration: 2000,
-    });
+    if (unlock) {
+      const message = `Hi! I'm interested in your ${unlock.match.title} listing for $${unlock.match.price.toFixed(2)}. Is it still available?`;
+      navigator.clipboard.writeText(message);
+      setHasCopied(true);
+      setTimeout(() => setHasCopied(false), 2000);
+    }
   };
   
   const handleVisitListing = () => {
@@ -100,124 +78,147 @@ export default function UnlockDetailPage() {
   
   if (isLoading) {
     return (
-      <Container maxW="container.md" py={8}>
-        <Skeleton height="300px" mb={6} />
-        <SkeletonText mt="4" noOfLines={4} spacing="4" skeletonHeight="2" />
-      </Container>
+      <div className="container mx-auto py-8 px-4">
+        <div className="animate-pulse">
+          <div className="h-64 bg-gray-200 rounded-lg mb-6"></div>
+          <div className="h-4 bg-gray-200 rounded mb-2 w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded mb-2 w-1/2"></div>
+          <div className="h-4 bg-gray-200 rounded mb-2 w-5/6"></div>
+        </div>
+      </div>
     );
   }
   
   if (error) {
     return (
-      <Container maxW="container.md" py={8}>
-        <Alert status="error">
-          <AlertIcon />
+      <div className="container mx-auto py-8 px-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           {error}
-        </Alert>
-      </Container>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!unlock) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+          Unlock not found
+        </div>
+      </div>
     );
   }
   
   return (
-    <Container maxW="container.md" py={8}>
-      <Box mb={8}>
-        <Image
+    <div className="container mx-auto py-8 px-4 max-w-4xl">
+      <div className="mb-8">
+        <img
           src={unlock.match.imageUrl}
           alt={unlock.match.title}
-          borderRadius="lg"
-          objectFit="cover"
-          width="100%"
-          height="400px"
+          className="rounded-lg object-cover w-full h-96"
         />
-      </Box>
+      </div>
       
-      <Flex justify="space-between" align="center" mb={4}>
-        <Heading as="h1" size="xl">{unlock.match.title}</Heading>
-        <Badge colorScheme="green" fontSize="lg" py={1} px={2}>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold">{unlock.match.title}</h1>
+        <span className="bg-green-500 text-white px-3 py-1 rounded-full text-lg font-medium">
           ${unlock.match.price.toFixed(2)}
-        </Badge>
-      </Flex>
+        </span>
+      </div>
       
-      <Flex align="center" color="purple.500" mb={4}>
-        <UnlockIcon mr={2} />
-        <Text fontWeight="medium">Unlocked on {new Date(unlock.unlockedAt).toLocaleDateString()}</Text>
-      </Flex>
+      <div className="flex items-center text-purple-600 mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+        </svg>
+        <span className="font-medium">Unlocked on {new Date(unlock.createdAt).toLocaleDateString()}</span>
+      </div>
       
-      <Text fontSize="lg" color="gray.600" mb={6}>
+      <p className="text-lg text-gray-600 mb-6">
         {unlock.match.description}
-      </Text>
+      </p>
       
-      <Flex mb={6}>
-        <Box flex="1">
-          <Text fontWeight="bold">Location</Text>
-          <Text>{unlock.match.location}</Text>
-        </Box>
-        <Box flex="1">
-          <Text fontWeight="bold">Payment</Text>
-          <Text>${unlock.payment.amount.toFixed(2)} ({unlock.payment.status})</Text>
-        </Box>
-      </Flex>
+      <div className="flex mb-6">
+        <div className="flex-1">
+          <p className="font-bold">Location</p>
+          <p>{unlock.match.location}</p>
+        </div>
+        <div className="flex-1">
+          <p className="font-bold">Payment</p>
+          <p>${unlock.payment.amount.toFixed(2)} ({unlock.payment.status})</p>
+        </div>
+      </div>
       
-      <Divider mb={6} />
+      <hr className="mb-6" />
       
-      <Card variant="outline" mb={6}>
-        <CardBody>
-          <Heading size="md" mb={4}>Seller Information</Heading>
-          <Stack spacing={2}>
-            <Flex>
-              <Text fontWeight="bold" width="100px">Name:</Text>
-              <Text>{unlock.match.sellerInfo.name}</Text>
-            </Flex>
-            <Flex>
-              <Text fontWeight="bold" width="100px">Email:</Text>
-              <Text>{unlock.match.sellerInfo.email}</Text>
-            </Flex>
-            <Flex>
-              <Text fontWeight="bold" width="100px">Phone:</Text>
-              <Text>{unlock.match.sellerInfo.phone}</Text>
-            </Flex>
-          </Stack>
-        </CardBody>
-      </Card>
+      <div className="border rounded-lg p-4 mb-6">
+        <h2 className="text-xl font-bold mb-4">Seller Information</h2>
+        <div className="space-y-2">
+          <div className="flex">
+            <span className="font-bold w-24">Name:</span>
+            <span>{unlock.match.sellerInfo?.name || 'Not available'}</span>
+          </div>
+          <div className="flex">
+            <span className="font-bold w-24">Rating:</span>
+            <span>{unlock.match.sellerInfo?.rating || 'Not available'}</span>
+          </div>
+          <div className="flex">
+            <span className="font-bold w-24">Member since:</span>
+            <span>{unlock.match.sellerInfo?.joinedDate ? new Date(unlock.match.sellerInfo.joinedDate).toLocaleDateString() : 'Not available'}</span>
+          </div>
+        </div>
+      </div>
       
-      <Card variant="outline" mb={6}>
-        <CardBody>
-          <Heading size="md" mb={4}>Suggested Message</Heading>
-          <Textarea
-            value={unlock.suggestedMessage}
-            isReadOnly
-            mb={4}
-            rows={4}
-          />
-          <Button
-            leftIcon={hasCopied ? <CheckIcon /> : <CopyIcon />}
-            onClick={handleCopyMessage}
-            colorScheme={hasCopied ? 'green' : 'purple'}
-            size="sm"
-          >
-            {hasCopied ? 'Copied' : 'Copy Message'}
-          </Button>
-        </CardBody>
-      </Card>
+      <div className="border rounded-lg p-4 mb-6">
+        <h2 className="text-xl font-bold mb-4">Suggested Message</h2>
+        <textarea
+          value={`Hi! I'm interested in your ${unlock.match.title} listing for $${unlock.match.price.toFixed(2)}. Is it still available?`}
+          readOnly
+          className="w-full border rounded p-2 mb-4 h-24"
+        />
+        <button
+          onClick={handleCopyMessage}
+          className={`flex items-center ${hasCopied ? 'bg-green-500' : 'bg-purple-600'} text-white px-3 py-1 rounded text-sm`}
+        >
+          {hasCopied ? (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Copied
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
+                <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" />
+              </svg>
+              Copy Message
+            </>
+          )}
+        </button>
+      </div>
       
-      <Flex justify="space-between">
-        <Button
-          variant="outline"
+      <div className="flex justify-between">
+        <button
           onClick={() => router.push('/unlocks')}
+          className="border border-gray-300 px-4 py-2 rounded"
         >
           Back to Unlocks
-        </Button>
+        </button>
         
         {unlock.match.listingUrl && (
-          <Button
-            rightIcon={<ExternalLinkIcon />}
-            colorScheme="purple"
+          <button
             onClick={handleVisitListing}
+            className="bg-purple-600 text-white px-4 py-2 rounded flex items-center"
           >
             Visit Original Listing
-          </Button>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+              <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+            </svg>
+          </button>
         )}
-      </Flex>
-    </Container>
+      </div>
+    </div>
   );
 }

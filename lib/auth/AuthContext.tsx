@@ -17,8 +17,8 @@ interface AuthContextType {
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  updatePassword: (password: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<boolean>;
+  updatePassword: (password: string) => Promise<boolean>;
   clearError: () => void;
   refreshSession: () => Promise<boolean>;
 }
@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Reset password function
-  const resetPassword = async (email: string) => {
+  const resetPassword = async (email: string): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
     try {
@@ -163,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Update password function
-  const updatePassword = async (password: string) => {
+  const updatePassword = async (password: string): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
     try {

@@ -1,14 +1,55 @@
-import { 
-  SearchParams, 
-  CreateSearchResponse, 
-  GetSearchResultsResponse,
-  GetSearchJobStatusResponse,
-  GetSearchHistoryResponse,
-  SaveSearchRequest,
-  SaveSearchResponse,
-  GetSavedSearchesResponse,
-  RunSavedSearchResponse
-} from '@/lib/types/search';
+import { SearchParams, SearchHistoryItem, SearchResult, SearchJob, SavedSearch } from '@/lib/types';
+
+// Response type definitions
+interface CreateSearchResponse {
+  searchId: string;
+  jobId: string;
+}
+
+interface GetSearchResultsResponse {
+  results: SearchResult[];
+  total: number;
+  jobId?: string;
+  jobStatus?: string;
+}
+
+interface GetSearchJobStatusResponse {
+  job: SearchJob;
+  status: string;
+  resultsCount?: number;
+  error?: string;
+}
+
+interface GetSearchHistoryResponse {
+  searches: SearchHistoryItem[];
+  total: number;
+}
+
+interface SaveSearchRequest {
+  name: string;
+  query: string;
+  location?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  category?: string;
+  radius?: number;
+  sortBy?: string;
+  notifyOnNew?: boolean;
+}
+
+interface SaveSearchResponse {
+  id: string;
+}
+
+interface GetSavedSearchesResponse {
+  searches: SavedSearch[];
+  total: number;
+}
+
+interface RunSavedSearchResponse {
+  searchId: string;
+  jobId: string;
+}
 
 /**
  * Client-side search service for interacting with the search API

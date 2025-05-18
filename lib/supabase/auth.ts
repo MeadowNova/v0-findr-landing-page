@@ -1,6 +1,7 @@
 import { supabase } from './client';
 import { supabaseServer } from './server';
 import { ApiException, ErrorCode } from '@/lib/api';
+import { LoginRequest, PasswordResetRequest, PasswordUpdateRequest, RegisterRequest } from '@/lib/types';
 
 /**
  * Authentication service for Supabase
@@ -8,15 +9,25 @@ import { ApiException, ErrorCode } from '@/lib/api';
 export const authService = {
   /**
    * Register a new user
-   * @param email User email
-   * @param password User password
+   * @param params Registration parameters or email
+   * @param password User password (if first param is email)
    * @returns User data
    */
-  async register(email: string, password: string) {
+  async register(params: RegisterRequest | string, password?: string) {
+    let email: string;
+    let userPassword: string;
+    
+    if (typeof params === 'string') {
+      email = params;
+      userPassword = password as string;
+    } else {
+      email = params.email;
+      userPassword = params.password;
+    }
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
-        password,
+        password: userPassword,
       });
 
       if (error) {
@@ -41,15 +52,25 @@ export const authService = {
 
   /**
    * Login a user
-   * @param email User email
-   * @param password User password
+   * @param params Login parameters or email
+   * @param password User password (if first param is email)
    * @returns User data
    */
-  async login(email: string, password: string) {
+  async login(params: LoginRequest | string, password?: string) {
+    let email: string;
+    let userPassword: string;
+    
+    if (typeof params === 'string') {
+      email = params;
+      userPassword = password as string;
+    } else {
+      email = params.email;
+      userPassword = params.password;
+    }
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password: userPassword,
       });
 
       if (error) {
@@ -183,9 +204,10 @@ export const authService = {
 
   /**
    * Send a password reset email
-   * @param email User email
+   * @param params Password reset parameters or email
    */
-  async resetPassword(email: string) {
+  async resetPassword(params: PasswordResetRequest | string) {
+    const email = typeof params === 'string' ? params : params.email;
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/reset-password`,
@@ -211,9 +233,10 @@ export const authService = {
 
   /**
    * Update the user's password
-   * @param password New password
+   * @param params Password update parameters or password string
    */
-  async updatePassword(password: string) {
+  async updatePassword(params: PasswordUpdateRequest | string) {
+    const password = typeof params === 'string' ? params : params.password;
     try {
       const { error } = await supabase.auth.updateUser({
         password,

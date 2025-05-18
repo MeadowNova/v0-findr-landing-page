@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ApiContext, ApiException, ErrorCode } from './types';
 import { errorResponse, unauthorizedResponse } from './response';
 import { authService } from '@/lib/supabase/auth';
+import { supabase } from '@/lib/supabase/client';
 
 /**
  * Type for middleware handler functions
@@ -21,6 +22,7 @@ export function withMiddleware(
   handler: MiddlewareHandler,
   options: {
     requireAuth?: boolean;
+    requiredRole?: string;
     rateLimit?: {
       limit: number;
       window: number; // in seconds
@@ -91,40 +93,42 @@ async function authenticateRequest(req: NextRequest, required: boolean = true): 
 
   // If no auth header and auth is required, return unauthorized
   if (!authHeader && required) {
-    return {
-      isAuthenticated: false,
-      message: 'Authentication required',
-    };
+  return {
+  isAuthenticated: false,
+  message: 'Authentication required',
+  };
   }
 
   // If no auth header and auth is not required, return not authenticated
   if (!authHeader && !required) {
-    return {
-      isAuthenticated: false,
-    };
+  return {
+  isAuthenticated: false,
+  };
   }
 
   // Check if the auth header is a bearer token
   if (!authHeader?.startsWith('Bearer ')) {
-    return {
-      isAuthenticated: false,
-      message: 'Invalid authentication format',
-    };
+  return {
+  isAuthenticated: false,
+  message: 'Invalid authentication format',
+  };
   }
 
   // Extract the token
   const token = authHeader.substring(7);
 
   try {
-    // Verify the token using Supabase Auth
-    const { user, error } = await authService.verifyToken(token);
-
-    if (error || !user) {
-      return {
-        isAuthenticated: false,
-        message: error?.message || 'Invalid token',
-      };
-    }
+  // Verify the token using Supabase Auth
+  const { data, error } = await supabase.auth.getUser(token);
+    
+  if (error || !data.user) {
+  return {
+  isAuthenticated: false,
+  message: error?.message || 'Invalid token',
+  };
+  }
+    
+    const user = data.user;
 
     return {
       isAuthenticated: true,

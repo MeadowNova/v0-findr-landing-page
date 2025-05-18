@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import SearchForm from '@/components/search/SearchForm';
 import SearchHistory from '@/components/search/SearchHistory';
 import { searchClient } from '@/lib/services/search-client';
-import { SearchParams } from '@/lib/types/search';
+import { SearchParams } from '@/lib/types';
 import { useAuth } from '@/lib/auth/useAuth';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
