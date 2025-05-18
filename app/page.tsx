@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import SearchForm from '@/components/search/SearchForm';
 
 export default function Home() {
   const router = useRouter();
@@ -156,6 +157,21 @@ export default function Home() {
               </div>
             </dl>
           </div>
+        </div>
+      </div>
+
+      {/* Search Form Section */}
+      <div className="bg-gray-50 py-12">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+              Start Your Search
+            </h2>
+            <p className="mt-4 text-lg text-gray-500">
+              Tell us what you're looking for and we'll find it for you.
+            </p>
+          </div>
+          <SearchForm />
         </div>
       </div>
 
