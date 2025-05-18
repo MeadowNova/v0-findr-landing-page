@@ -2,29 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Box,
-  Container,
-  Heading,
-  SimpleGrid,
-  Card,
-  CardBody,
-  Image,
-  Stack,
-  Text,
-  Divider,
-  CardFooter,
-  ButtonGroup,
-  Button,
-  Badge,
-  Flex,
-  Skeleton,
-  SkeletonText,
-  Alert,
-  AlertIcon,
-  Icon,
-} from '@chakra-ui/react';
-import { LockIcon, UnlockIcon } from '@chakra-ui/icons';
+import Link from 'next/link';
+import Image from 'next/image';
 import { apiClient } from '@/lib/api/client';
 
 export default function UnlocksPage() {
@@ -77,101 +56,114 @@ export default function UnlocksPage() {
   
   if (isLoading) {
     return (
-      <Container maxW="container.xl" py={8}>
-        <Heading mb={6}>Your Unlocked Matches</Heading>
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Your Unlocked Matches</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2].map((i) => (
-            <Card key={i} maxW="md">
-              <Skeleton height="200px" />
-              <CardBody>
-                <SkeletonText mt="4" noOfLines={4} spacing="4" skeletonHeight="2" />
-              </CardBody>
-            </Card>
+            <div key={i} className="bg-white shadow rounded-lg overflow-hidden">
+              <div className="h-48 bg-gray-200 animate-pulse"></div>
+              <div className="p-4">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6 mb-2 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse"></div>
+              </div>
+            </div>
           ))}
-        </SimpleGrid>
-      </Container>
+        </div>
+      </div>
     );
   }
   
   if (error) {
     return (
-      <Container maxW="container.xl" py={8}>
-        <Alert status="error">
-          <AlertIcon />
-          {error}
-        </Alert>
-      </Container>
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
   
   if (unlocks.length === 0) {
     return (
-      <Container maxW="container.xl" py={8}>
-        <Heading mb={6}>Your Unlocked Matches</Heading>
-        <Card p={6} textAlign="center">
-          <CardBody>
-            <Icon as={LockIcon} boxSize={12} color="gray.400" mb={4} />
-            <Heading size="md" mb={2}>No Unlocked Matches Yet</Heading>
-            <Text color="gray.600" mb={4}>
-              You haven't unlocked any matches yet. Unlock a match to view seller contact information.
-            </Text>
-            <Button colorScheme="purple" onClick={() => router.push('/matches')}>
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Your Unlocked Matches</h1>
+        <div className="bg-white shadow rounded-lg p-6 text-center">
+          <svg className="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <h2 className="mt-2 text-lg font-medium text-gray-900">No Unlocked Matches Yet</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            You haven't unlocked any matches yet. Unlock a match to view seller contact information.
+          </p>
+          <div className="mt-6">
+            <button
+              onClick={() => router.push('/matches')}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
               Browse Matches
-            </Button>
-          </CardBody>
-        </Card>
-      </Container>
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
   
   return (
-    <Container maxW="container.xl" py={8}>
-      <Heading mb={6}>Your Unlocked Matches</Heading>
-      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">Your Unlocked Matches</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {unlocks.map((unlock) => (
-          <Card key={unlock.id} maxW="md" overflow="hidden">
-            <Image
-              src={unlock.match.imageUrl}
-              alt={unlock.match.title}
-              height="200px"
-              objectFit="cover"
-            />
-            <CardBody>
-              <Stack spacing={3}>
-                <Flex justify="space-between" align="center">
-                  <Heading size="md">{unlock.match.title}</Heading>
-                  <Badge colorScheme="green">${unlock.match.price.toFixed(2)}</Badge>
-                </Flex>
-                <Text color="gray.600" noOfLines={2}>
-                  {unlock.match.description}
-                </Text>
-                <Flex align="center" color="purple.500">
-                  <UnlockIcon mr={2} />
-                  <Text fontWeight="medium">Unlocked on {new Date(unlock.unlockedAt).toLocaleDateString()}</Text>
-                </Flex>
-                <Box bg="gray.50" p={3} borderRadius="md">
-                  <Text fontWeight="bold" mb={1}>Seller Contact:</Text>
-                  <Text>{unlock.match.sellerInfo.name}</Text>
-                  <Text>{unlock.match.sellerInfo.email}</Text>
-                  <Text>{unlock.match.sellerInfo.phone}</Text>
-                </Box>
-              </Stack>
-            </CardBody>
-            <Divider />
-            <CardFooter>
-              <ButtonGroup spacing={2}>
-                <Button 
-                  variant="solid" 
-                  colorScheme="purple"
-                  onClick={() => handleViewUnlock(unlock.id)}
-                >
-                  View Details
-                </Button>
-              </ButtonGroup>
-            </CardFooter>
-          </Card>
+          <div key={unlock.id} className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="h-48 bg-gray-200 relative">
+              <img
+                src={unlock.match.imageUrl}
+                alt={unlock.match.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="p-4">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-lg font-medium text-gray-900">{unlock.match.title}</h2>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  ${unlock.match.price.toFixed(2)}
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 mb-2 line-clamp-2">
+                {unlock.match.description}
+              </p>
+              <div className="flex items-center text-indigo-600 mb-3">
+                <svg className="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z" />
+                </svg>
+                <span className="text-sm font-medium">Unlocked on {new Date(unlock.unlockedAt).toLocaleDateString()}</span>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-md mb-4">
+                <p className="text-sm font-bold text-gray-900 mb-1">Seller Contact:</p>
+                <p className="text-sm text-gray-700">{unlock.match.sellerInfo.name}</p>
+                <p className="text-sm text-gray-700">{unlock.match.sellerInfo.email}</p>
+                <p className="text-sm text-gray-700">{unlock.match.sellerInfo.phone}</p>
+              </div>
+              <button
+                onClick={() => handleViewUnlock(unlock.id)}
+                className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                View Details
+              </button>
+            </div>
+          </div>
         ))}
-      </SimpleGrid>
-    </Container>
+      </div>
+    </div>
   );
 }
