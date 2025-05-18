@@ -154,6 +154,34 @@ export const authService = {
   },
 
   /**
+   * Refresh the current session
+   * @returns Refreshed session data
+   */
+  async refreshSession() {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+
+      if (error) {
+        throw new ApiException(
+          ErrorCode.AUTHENTICATION_ERROR,
+          error.message,
+        );
+      }
+
+      return data.session;
+    } catch (error) {
+      if (error instanceof ApiException) {
+        throw error;
+      }
+      
+      throw new ApiException(
+        ErrorCode.AUTHENTICATION_ERROR,
+        'Failed to refresh session',
+      );
+    }
+  },
+
+  /**
    * Send a password reset email
    * @param email User email
    */

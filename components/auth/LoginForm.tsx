@@ -42,9 +42,8 @@ export default function LoginForm() {
 
   // Handle form submission
   const onSubmit = async (data: LoginFormValues) => {
-    await login(data.email, data.password);
-    // Note: The rememberMe functionality would typically be implemented
-    // by setting a longer session duration, but Supabase handles this automatically
+    // Pass the rememberMe value to the login function
+    await login(data.email, data.password, data.rememberMe);
   };
 
   return (
