@@ -1,5 +1,5 @@
 import { ApiException, ErrorCode } from '@/lib/api';
-import { supabase } from '@/lib/supabase/client';
+import { supabaseServer } from '@/lib/supabase/server';
 import Stripe from 'stripe';
 
 // Initialize Stripe with API key
@@ -35,7 +35,7 @@ export const stripeService = {
       }
 
       // Check if match exists and belongs to the user
-      const { data: match, error: matchError } = await supabase
+      const { data: match, error: matchError } = await supabaseServer
         .from('matches')
         .select('*, searches!inner(*)')
         .eq('id', matchId)
@@ -50,7 +50,7 @@ export const stripeService = {
       }
 
       // Check if match is already unlocked by the user
-      const { data: existingUnlock, error: unlockError } = await supabase
+      const { data: existingUnlock, error: unlockError } = await supabaseServer
         .from('unlocks')
         .select('*')
         .eq('user_id', userId)
@@ -94,7 +94,7 @@ export const stripeService = {
       });
 
       // Create a pending payment record in the database
-      const { data: payment, error: paymentError } = await supabase
+      const { data: payment, error: paymentError } = await supabaseServer
         .from('payments')
         .insert({
           user_id: userId,
@@ -162,7 +162,7 @@ export const stripeService = {
       }
 
       // Check if match exists and belongs to the user
-      const { data: match, error: matchError } = await supabase
+      const { data: match, error: matchError } = await supabaseServer
         .from('matches')
         .select('*, searches!inner(*)')
         .eq('id', matchId)
@@ -177,7 +177,7 @@ export const stripeService = {
       }
 
       // Check if match is already unlocked by the user
-      const { data: existingUnlock, error: unlockError } = await supabase
+      const { data: existingUnlock, error: unlockError } = await supabaseServer
         .from('unlocks')
         .select('*')
         .eq('user_id', userId)
@@ -203,7 +203,7 @@ export const stripeService = {
       });
 
       // Create a pending payment record in the database
-      const { data: payment, error: paymentError } = await supabase
+      const { data: payment, error: paymentError } = await supabaseServer
         .from('payments')
         .insert({
           user_id: userId,
@@ -304,7 +304,7 @@ export const stripeService = {
       }
 
       // Update payment status in the database
-      const { data: payment, error: paymentError } = await supabase
+      const { data: payment, error: paymentError } = await supabaseServer
         .from('payments')
         .update({ status: 'completed', updated_at: new Date().toISOString() })
         .eq('stripe_payment_id', sessionId)
@@ -322,7 +322,7 @@ export const stripeService = {
       }
 
       // Create unlock record
-      const { data: unlock, error: unlockError } = await supabase
+      const { data: unlock, error: unlockError } = await supabaseServer
         .from('unlocks')
         .insert({
           user_id: userId,
@@ -401,7 +401,7 @@ export const stripeService = {
       }
 
       // Update payment status in the database
-      const { data: payment, error: paymentError } = await supabase
+      const { data: payment, error: paymentError } = await supabaseServer
         .from('payments')
         .update({ status: 'completed', updated_at: new Date().toISOString() })
         .eq('stripe_payment_id', paymentIntentId)
@@ -419,7 +419,7 @@ export const stripeService = {
       }
 
       // Create unlock record
-      const { data: unlock, error: unlockError } = await supabase
+      const { data: unlock, error: unlockError } = await supabaseServer
         .from('unlocks')
         .insert({
           user_id: userId,
@@ -464,7 +464,7 @@ export const stripeService = {
   async generateSuggestedMessage(matchId: string): Promise<string> {
     try {
       // Get match details
-      const { data: match, error } = await supabase
+      const { data: match, error } = await supabaseServer
         .from('matches')
         .select('title, price')
         .eq('id', matchId)
@@ -540,7 +540,7 @@ export const stripeService = {
    */
   async handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
     // Update payment status in the database
-    const { error } = await supabase
+    const { error } = await supabaseServer
       .from('payments')
       .update({ status: 'completed', updated_at: new Date().toISOString() })
       .eq('stripe_payment_id', paymentIntent.id);
@@ -556,7 +556,7 @@ export const stripeService = {
    */
   async handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
     // Update payment status in the database
-    const { error } = await supabase
+    const { error } = await supabaseServer
       .from('payments')
       .update({ status: 'failed', updated_at: new Date().toISOString() })
       .eq('stripe_payment_id', paymentIntent.id);

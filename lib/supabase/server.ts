@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
 
 // Initialize the Supabase client using environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hpkjhaiwwrtqapucddsg.supabase.co';
@@ -13,19 +12,37 @@ export const supabaseServer = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 // Create a Supabase client with the user's session for server components
-export const createServerSupabaseClient = () => {
+// This function should only be used in App Router server components or API routes
+export const createServerSupabaseClient = async (cookieHeader?: string) => {
+  // For API routes or server components that don't use cookies() from next/headers
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      persistSession: false,
+      detectSessionInUrl: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      headers: cookieHeader ? {
+        cookie: cookieHeader,
+      } : undefined,
+    },
+  });
+};
+
+// For use in App Router server components only
+export const createServerComponentClient = async () => {
+  // Dynamic import to avoid issues with Pages Router
+  const { cookies } = await import('next/headers');
   const cookieStore = cookies();
   
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
-      // Get the user's session from cookies
       detectSessionInUrl: false,
       autoRefreshToken: false,
     },
     global: {
       headers: {
-        // Get the user's session from cookies
         cookie: cookieStore.toString(),
       },
     },
