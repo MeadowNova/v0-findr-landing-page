@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../supabase/client';
 import { authService } from '../supabase/auth';
@@ -18,6 +18,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
+  refreshSession: () => Promise<boolean>;
   clearError: () => void;
 }
 
@@ -32,6 +33,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  // Function to refresh the session
+  const refreshSession = useCallback(async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+
+      if (error) {
+        console.error('Session refresh error:', error);
+        return false;
+      }
+
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error refreshing session:', error);
+      return false;
+    }
+  }, []);
+
   // Check for session on initial load
   useEffect(() => {
     const initializeAuth = async () => {
@@ -43,18 +67,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Set up auth state listener
         const { data: { subscription } } = await supabase.auth.onAuthStateChange(
-          (_event, session) => {
+          async (event, session) => {
             setSession(session);
             setUser(session?.user || null);
+
+            // If the session is expired, try to refresh it
+            if (event === 'TOKEN_REFRESHED') {
+              console.log('Token refreshed successfully');
+            }
+
             setIsLoading(false);
           }
         );
 
+        // Set up session refresh interval
+        const refreshInterval = setInterval(async () => {
+          // Only try to refresh if there's a session
+          if (session) {
+            const timeUntilExpiry = session.expires_at
+              ? (session.expires_at * 1000) - Date.now()
+              : 0;
+
+            // Refresh when we're within 5 minutes of expiry
+            if (timeUntilExpiry < 5 * 60 * 1000) {
+              await refreshSession();
+            }
+          }
+        }, 60 * 1000); // Check every minute
+
         setIsLoading(false);
 
-        // Cleanup subscription on unmount
+        // Cleanup subscription and interval on unmount
         return () => {
           subscription.unsubscribe();
+          clearInterval(refreshInterval);
         };
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -63,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     initializeAuth();
-  }, []);
+  }, [refreshSession]);
 
   // Login function
   const login = async (email: string, password: string) => {
@@ -168,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
     resetPassword,
     updatePassword,
+    refreshSession,
     clearError,
   };
 
