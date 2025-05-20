@@ -60,8 +60,8 @@ export default function BrightDataAdminPage() {
     }
   };
 
-  // Create or update MCP preset
-  const createOrUpdatePreset = async () => {
+  // Check zone configuration
+  const checkZoneConfiguration = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -75,22 +75,22 @@ export default function BrightDataAdminPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create/update Bright Data MCP preset');
+        throw new Error(errorData.message || 'Failed to check Bright Data zone configuration');
       }
 
       const data = await response.json();
 
-      toast.success('Bright Data MCP preset created/updated successfully');
+      toast.success('Bright Data zone configuration checked successfully');
       setLoading(false);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
-      toast.error('Failed to create/update Bright Data MCP preset');
+      toast.error('Failed to check Bright Data zone configuration');
       setLoading(false);
     }
   };
 
-  // Test MCP preset
-  const testPreset = async () => {
+  // Test URL with Bright Data API
+  const handleTestUrl = async () => {
     try {
       setTestLoading(true);
       setError(null);
@@ -106,42 +106,44 @@ export default function BrightDataAdminPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to test Bright Data MCP preset');
+        throw new Error(errorData.message || 'Failed to test URL with Bright Data API');
       }
 
       const data = await response.json();
 
-      setTestResults(data.data.data);
-      toast.success('Bright Data MCP preset tested successfully');
+      setTestResults(data.data);
+      toast.success('URL tested successfully with Bright Data API');
       setTestLoading(false);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
-      toast.error('Failed to test Bright Data MCP preset');
+      toast.error('Failed to test URL with Bright Data API');
       setTestLoading(false);
     }
   };
 
-  // Check quota
-  const checkQuota = async () => {
+  // Get account information
+  const getAccountInfo = async () => {
     try {
       setQuotaLoading(true);
       setError(null);
 
-      const response = await fetch('/api/v1/brightdata/quota');
+      const response = await fetch('/api/v1/brightdata');
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to check Bright Data MCP quota');
+        throw new Error(errorData.message || 'Failed to get Bright Data account information');
       }
 
       const data = await response.json();
 
-      setQuotaInfo(data.data.quota);
-      toast.success('Quota information retrieved successfully');
+      if (data.data.accountInfo && data.data.accountInfo.quota) {
+        setQuotaInfo(data.data.accountInfo.quota);
+      }
+      toast.success('Account information retrieved successfully');
       setQuotaLoading(false);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
-      toast.error('Failed to check quota');
+      toast.error('Failed to get account information');
       setQuotaLoading(false);
     }
   };
@@ -160,7 +162,7 @@ export default function BrightDataAdminPage() {
 
       <Tabs defaultValue="preset" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="preset">MCP Preset</TabsTrigger>
+          <TabsTrigger value="preset">Zone Configuration</TabsTrigger>
           <TabsTrigger value="proxy">Proxy Details</TabsTrigger>
           <TabsTrigger value="test">Test Preset</TabsTrigger>
           <TabsTrigger value="quota">Quota Information</TabsTrigger>
@@ -169,17 +171,17 @@ export default function BrightDataAdminPage() {
         <TabsContent value="preset">
           <Card>
             <CardHeader>
-              <CardTitle>Facebook Marketplace MCP Preset</CardTitle>
+              <CardTitle>Bright Data Zone Configuration</CardTitle>
               <CardDescription>
-                Configure and manage the Bright Data MCP preset for Facebook Marketplace scraping.
+                Configure and manage the Bright Data zone for Facebook Marketplace scraping.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Preset Name</Label>
-                    <Input value="fb-marketplace-scraper" disabled />
+                    <Label>Zone Name</Label>
+                    <Input value="mcp_unlocker" disabled />
                   </div>
                   <div>
                     <Label>API Key</Label>
@@ -219,14 +221,14 @@ export default function BrightDataAdminPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button onClick={createOrUpdatePreset} disabled={loading}>
+              <Button onClick={checkZoneConfiguration} disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Preset...
+                    Checking Zone...
                   </>
                 ) : (
-                  'Create/Update Preset'
+                  'Check Zone Configuration'
                 )}
               </Button>
             </CardFooter>
@@ -318,9 +320,9 @@ export default function BrightDataAdminPage() {
         <TabsContent value="test">
           <Card>
             <CardHeader>
-              <CardTitle>Test Facebook Marketplace MCP Preset</CardTitle>
+              <CardTitle>Test URL with Bright Data API</CardTitle>
               <CardDescription>
-                Test the MCP preset with a sample Facebook Marketplace URL.
+                Test the Bright Data API with a sample Facebook Marketplace URL.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -346,14 +348,14 @@ export default function BrightDataAdminPage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button onClick={testPreset} disabled={testLoading}>
+              <Button onClick={handleTestUrl} disabled={testLoading}>
                 {testLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Testing...
                   </>
                 ) : (
-                  'Test Preset'
+                  'Test URL'
                 )}
               </Button>
             </CardFooter>
@@ -363,9 +365,9 @@ export default function BrightDataAdminPage() {
         <TabsContent value="quota">
           <Card>
             <CardHeader>
-              <CardTitle>Bright Data MCP Quota Information</CardTitle>
+              <CardTitle>Bright Data Account Information</CardTitle>
               <CardDescription>
-                View your current quota usage and limits.
+                View your current account information and quota limits.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -403,16 +405,16 @@ export default function BrightDataAdminPage() {
               )}
             </CardContent>
             <CardFooter>
-              <Button onClick={checkQuota} disabled={quotaLoading}>
+              <Button onClick={getAccountInfo} disabled={quotaLoading}>
                 {quotaLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Checking Quota...
+                    Loading Account Info...
                   </>
                 ) : (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4" />
-                    Refresh Quota Information
+                    Refresh Account Information
                   </>
                 )}
               </Button>

@@ -6,12 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:brightdata": "chmod +x tests/scripts/run-brightdata-tests.sh && ./tests/scripts/run-brightdata-tests.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@supabase/supabase-js": "^2.39.8",
     "autoprefixer": "^10.4.20",
+    "cheerio": "^1.0.0",
     "date-fns": "^2.30.0",
     "next": "15.2.4",
     "react": "^19",
@@ -23,9 +28,22 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "https-proxy-agent": "^7.0.6",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-html-reporter": "^3.10.2",
+    "ts-jest": "^29.3.4",
     "typescript": "^5"
+  },
+  "babel": {
+    "presets": [
+      "next/babel"
+    ]
   }
 }

@@ -8,7 +8,7 @@ import {
   withMiddleware,
   z
 } from '@/lib/api';
-import { brightDataService, facebookMarketplacePresetConfig } from '@/lib/services/brightdata';
+import { brightDataService } from '@/lib/services/brightdata';
 
 // Test preset request schema
 const testPresetSchema = z.object({
@@ -24,19 +24,24 @@ type TestPresetRequest = z.infer<typeof testPresetSchema>;
 /**
  * GET /api/v1/brightdata
  * 
- * Get Bright Data MCP configuration
+ * Get Bright Data configuration and account information
  */
 export const GET = withMiddleware(
   async (req: NextRequest, context: ApiContext) => {
     try {
-      // Check quota
-      const quotaResult = await brightDataService.checkQuota();
+      // Get account information
+      const accountResult = await brightDataService.getAccountInfo();
       
-      // Return configuration and quota information
+      // Check zone configuration
+      const zoneResult = await brightDataService.checkZoneConfiguration();
+      
+      // Return configuration and account information
       return successResponse({
-        config: facebookMarketplacePresetConfig,
-        quota: quotaResult.success ? quotaResult.quota : null,
-        quotaError: quotaResult.success ? null : quotaResult.error,
+        accountInfo: accountResult.success ? accountResult.accountInfo : null,
+        accountError: accountResult.success ? null : accountResult.error,
+        zoneInfo: zoneResult.success ? zoneResult.zoneInfo : null,
+        zoneError: zoneResult.success ? null : zoneResult.error,
+        proxyDetails: brightDataService.getProxyDetails()
       });
     } catch (error) {
       console.error('Error getting Bright Data configuration:', error);
@@ -54,29 +59,29 @@ export const GET = withMiddleware(
 /**
  * POST /api/v1/brightdata
  * 
- * Create or update Bright Data MCP preset
+ * Check Bright Data zone configuration
  */
 export const POST = withMiddleware(
   async (req: NextRequest, context: ApiContext) => {
     try {
-      // Create or update preset
-      const result = await brightDataService.createOrUpdateMCPPreset();
+      // Check zone configuration
+      const result = await brightDataService.checkZoneConfiguration();
       
       if (!result.success) {
         throw new ApiException(
           ErrorCode.EXTERNAL_SERVICE_ERROR,
-          'Failed to create/update Bright Data MCP preset',
+          'Failed to check Bright Data zone configuration',
           { message: result.error }
         );
       }
       
       // Return success response
       return successResponse({
-        message: 'Bright Data MCP preset created/updated successfully',
-        presetId: result.presetId,
+        message: 'Bright Data zone configuration checked successfully',
+        zoneInfo: result.zoneInfo,
       });
     } catch (error) {
-      console.error('Error creating/updating Bright Data MCP preset:', error);
+      console.error('Error checking Bright Data zone configuration:', error);
       
       if (error instanceof ApiException) {
         throw error;
@@ -84,7 +89,7 @@ export const POST = withMiddleware(
       
       throw new ApiException(
         ErrorCode.INTERNAL_SERVER_ERROR,
-        'Failed to create/update Bright Data MCP preset',
+        'Failed to check Bright Data zone configuration',
         { message: error instanceof Error ? error.message : String(error) }
       );
     }
@@ -95,7 +100,7 @@ export const POST = withMiddleware(
 /**
  * POST /api/v1/brightdata/test
  * 
- * Test Bright Data MCP preset with a sample URL
+ * Test Bright Data API with a sample URL
  */
 export const POST_test = withMiddleware(
   async (req: NextRequest, context: ApiContext) => {
@@ -107,24 +112,24 @@ export const POST_test = withMiddleware(
     const { url } = (req as any).validatedBody as TestPresetRequest;
     
     try {
-      // Test preset
-      const result = await brightDataService.testMCPPreset(url);
+      // Test URL
+      const result = await brightDataService.testUrl(url);
       
       if (!result.success) {
         throw new ApiException(
           ErrorCode.EXTERNAL_SERVICE_ERROR,
-          'Failed to test Bright Data MCP preset',
+          'Failed to test URL with Bright Data API',
           { message: result.error }
         );
       }
       
       // Return test results
       return successResponse({
-        message: 'Bright Data MCP preset tested successfully',
+        message: 'URL tested successfully with Bright Data API',
         data: result.data,
       });
     } catch (error) {
-      console.error('Error testing Bright Data MCP preset:', error);
+      console.error('Error testing URL with Bright Data API:', error);
       
       if (error instanceof ApiException) {
         throw error;
@@ -132,7 +137,7 @@ export const POST_test = withMiddleware(
       
       throw new ApiException(
         ErrorCode.INTERNAL_SERVER_ERROR,
-        'Failed to test Bright Data MCP preset',
+        'Failed to test URL with Bright Data API',
         { message: error instanceof Error ? error.message : String(error) }
       );
     }
