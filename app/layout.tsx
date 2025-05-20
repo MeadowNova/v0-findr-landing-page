@@ -5,6 +5,8 @@ import { Inter } from "next/font/google"
 import Navbar from '@/components/layout/Navbar'
 import { AuthProvider } from '@/lib/auth/AuthContext'
 import { Toaster } from '@/components/ui/toaster'
+import { ChakraProvider } from '@chakra-ui/react'
+import { Toaster as SonnerToaster } from 'sonner'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -22,11 +24,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
-          <Navbar />
-          {children}
-          <Toaster />
-        </AuthProvider>
+        <ChakraProvider>
+          <AuthProvider>
+            <Navbar />
+            {children}
+            <Toaster />
+            <SonnerToaster position="top-right" richColors />
+          </AuthProvider>
+        </ChakraProvider>
       </body>
     </html>
   )

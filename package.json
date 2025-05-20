@@ -13,15 +13,22 @@
     "test:brightdata": "chmod +x tests/scripts/run-brightdata-tests.sh && ./tests/scripts/run-brightdata-tests.sh"
   },
   "dependencies": {
+    "@chakra-ui/icons": "^2.1.1",
+    "@chakra-ui/react": "^2.8.2",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.0",
     "@hookform/resolvers": "^3.9.1",
     "@supabase/supabase-js": "^2.39.8",
     "autoprefixer": "^10.4.20",
     "cheerio": "^1.0.0",
     "date-fns": "^2.30.0",
+    "framer-motion": "^11.0.8",
+    "lucide-react": "^0.358.0",
     "next": "15.2.4",
     "react": "^19",
     "react-dom": "^19",
     "react-hook-form": "^7.54.1",
+    "sonner": "^1.4.3",
     "stripe": "^15.5.0",
     "tailwindcss": "^3.4.17",
     "uuid": "^9.0.1",
@@ -40,10 +47,5 @@
     "jest-html-reporter": "^3.10.2",
     "ts-jest": "^29.3.4",
     "typescript": "^5"
-  },
-  "babel": {
-    "presets": [
-      "next/babel"
-    ]
   }
 }
